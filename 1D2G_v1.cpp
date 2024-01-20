@@ -3,24 +3,35 @@
 
 using namespace std;
 
+
 // check start time
 double start_time = clock();
 
 // mesh number
 int NC = 80;
-int NR = 10;
+int NR = 20;
 
 // Diffusion coefficient [cm]
-double DC = 6.8f;
-double DR = 5.8f;
+double D1C = 1.3314f;
+double D2C = 0.2042f;
+double D1R = 1.2291f;
+double D2R = 0.1588f;
 
 // absorption X section [cm-1]
-double XaC = 0.300f;
-double XaR = 0.01f;
+double Xa1C = 0.006431f;
+double Xa2C = 0.09992f;
+double Xa1R = 0.0005903f;
+double Xa2R = 0.01882f;
 
 // fission X section [cm-1]
-double XfC = 0.65f;
-double XfR = 0.0f;
+double Xf1C = 0.003258f;
+double Xf2C = 0.1387f;
+double Xf1R = 0.00f;
+double Xf2R = 0.00f;
+
+// scattering X section [cm-1]
+double Xs12C = 0.05979f;
+double Xs12R = 0.06163f;
 
 // region size [cm]
 double sizeC = 40.0f;
@@ -34,13 +45,12 @@ double hR = sizeR / NR;
 double keff_old = 1.0f;
 double keff_new = 0.0f;
 
-// for effective k calculation
-double phi_sum_old = 0.0f;
-double phi_sum_new = 0.0f;
 
 // flux vector
-vector<double> phi_old(NC + NR + 2, 0.0f);
-vector<double> phi_new(NC + NR + 2, 0.0f);
+vector<double> phi1_old(NC + NR + 2, 0.0f); // group 1 flux
+vector<double> phi1_new(NC + NR + 2, 0.0f);
+vector<double> phi2_old(NC + NR + 2, 0.0f); // group 2 flux
+vector<double> phi2_new(NC + NR + 2, 0.0f);
 
 // Boundary condition
 /*	vacuum condition : r = 0.5
@@ -54,114 +64,166 @@ double rL = 10E-10f;
 double rR = 10E+10f;
 
 // Convergence criteria
-double crik = 1.0E-10f;
-double crip = 1.0E-10f;
+double crik = 1.0E-5f;
+double crip = 1.0E-6f;
 
 
 int main() {
 
 	// Diffusion coefficient vector define
-	vector<double> D(NC + NR + 1, 0.0f);
+	vector<double> D1(NC + NR + 1, 0.0f); // group 1
+	vector<double> D2(NC + NR + 1, 0.0f); // group 2
 	// mesh size vector define
 	vector<double> h(NC + NR + 1, 0.0f);
 	// absorption X section vector define
-	vector<double> Xa(NC + NR + 1, 0.0f);
+	vector<double> Xa1(NC + NR + 1, 0.0f); // group 1
+	vector<double> Xa2(NC + NR + 1, 0.0f); // group 2
 	// fission X section vector define
-	vector<double> Xf(NC + NR + 1, 0.0f);
+	vector<double> Xf1(NC + NR + 1, 0.0f); // group 1
+	vector<double> Xf2(NC + NR + 1, 0.0f); // group 2
+	// scattering X section vector define
+	vector<double> Xs12(NC + NR + 1, 0.0f);
+	// removal X section vector define
+	vector<double> Xr1(NC + NR + 1, 0.0f); // group 1
+	vector<double> Xr2(NC + NR + 1, 0.0f); // group 2
+
 	for (int i = 1; i <= NC; ++i) {
-		D[i] = DC;
+		D1[i] = D1C;
+		D2[i] = D2C;
 		h[i] = hC;
-		Xa[i] = XaC;
-		Xf[i] = XfC;
+		Xa1[i] = Xa1C;
+		Xa2[i] = Xa2C;
+		Xf1[i] = Xf1C;
+		Xf2[i] = Xf2C;
+		Xs12[i] = Xs12C;
+		Xr1[i] = Xa1[i] + Xs12[i];
+		Xr2[i] = Xa2[i];
 	}
 	for (int i = NC + 1; i <= NC + NR; ++i) {
-		D[i] = DR;
+		D1[i] = D1R;
+		D2[i] = D2R;
 		h[i] = hR;
-		Xa[i] = XaR;
-		Xf[i] = XfR;
+		Xa1[i] = Xa1R;
+		Xa2[i] = Xa2R;
+		Xf1[i] = Xf1R;
+		Xf2[i] = Xf2R;
+		Xs12[i] = Xs12R;
+		Xr1[i] = Xa1[i] + Xs12[i];
+		Xr2[i] = Xa2[i];
 	}
 
 	// beta vector define
-	vector<double> beta(NC + NR + 2, 0.0f);
-	beta[0] = rL / 2;
-	for (int i = 1; i <= NC + NR; ++i)
-		beta[i] = D[i] / h[i];
-	beta[NC + NR + 1] = rR / 2;
+	vector<double> beta1(NC + NR + 2, 0.0f);
+	vector<double> beta2(NC + NR + 2, 0.0f);
+	beta1[0] = rL / 2;
+	beta2[0] = rL / 2;
+	for (int i = 1; i <= NC + NR; ++i) {
+		beta1[i] = D1[i] / h[i];
+		beta2[i] = D2[i] / h[i];
+	}
+	beta1[NC + NR + 1] = rR / 2;
+	beta2[NC + NR + 1] = rR / 2;
 
 	// D tilder vector define
-	vector<double> D_tilder(NC + NR + 1, 0.0f);
-	for (int i = 0; i <= NC + NR; ++i)
-		D_tilder[i] = 2 * beta[i] * beta[i + 1] / (beta[i] + beta[i + 1]);
-
+	vector<double> D_tilder1(NC + NR + 1, 0.0f);
+	vector<double> D_tilder2(NC + NR + 1, 0.0f);
+	for (int i = 0; i <= NC + NR; ++i) {
+		D_tilder1[i] = 2 * beta1[i] * beta1[i + 1] / (beta1[i] + beta1[i + 1]);
+		D_tilder2[i] = 2 * beta2[i] * beta2[i + 1] / (beta2[i] + beta2[i + 1]);
+	}
+	
+	/////////////////////////////////////// Matrix M ///////////////////////////////////////////
+	// group 1
 	// diagonal vector define
-	vector<double> diagonal(NC + NR + 1, 0.0f);
+	vector<double> diagonal1(NC + NR + 1, 0.0f);
 	for (int i = 1; i <= NC + NR; ++i)
-		diagonal[i] = D_tilder[i - 1] + D_tilder[i] + Xa[i] * h[i];
+		diagonal1[i] = D_tilder1[i - 1] + D_tilder1[i] + Xr1[i] * h[i];
 
 	// bidiagonal vector define
-	vector<double> bidiagonal(NC + NR + 1, 0.0f);
+	vector<double> bidiagonal1(NC + NR + 1, 0.0f);
 	for (int i = 1; i <= NC + NR; ++i)
-		bidiagonal[i] = -D_tilder[i];
+		bidiagonal1[i] = -D_tilder1[i];
 
+	// group 2
+	// diagonal vector define
+	vector<double> diagonal2(NC + NR + 1, 0.0f);
+	for (int i = 1; i <= NC + NR; ++i)
+		diagonal2[i] = D_tilder2[i - 1] + D_tilder2[i] + Xr2[i] * h[i];
 
+	// bidiagonal vector define
+	vector<double> bidiagonal2(NC + NR + 1, 0.0f);
+	for (int i = 1; i <= NC + NR; ++i)
+		bidiagonal2[i] = -D_tilder2[i];
+	//////////////////////////////////////////////////////////////////////////////////////////
+	
 	// initial flux vector define
-	for (int i = 1; i <= NC + NR; ++i)
-		phi_old[i] = 1.0;
-	for (int i = 1; i <= NC + NR; ++i)
-		phi_new[i] = 1.0;
+	for (int i = 1; i <= NC + NR; ++i) {
+		phi1_old[i] = 1.0;
+		phi2_old[i] = 1.0;
+	}
+	for (int i = 1; i <= NC + NR; ++i) {
+		phi1_new[i] = 1.0;
+		phi2_new[i] = 1.0;
+	}
 
 	// error
 	double errk = 1.0f; // keff error
 	double errp = 1.0f; // flux error
+	double errp1 = 1.0f;
+	double errp2 = 1.0f;
 
 	// iteration counts
 	int icounts = 1;
 
 	while (errk > crik || errp > crip) {
 
-		// old flux sum
-		for (int i = 1; i <= NC + NR; ++i)
-			phi_sum_old += phi_old[i];
-
 		// Source vector define
-		vector<double> source(NC + NR + 1, 0.0f);
-		for (int i = 1; i <= NC + NR; ++i)
-			source[i] = 1 / keff_old * Xf[i] * phi_old[i];
+		vector<double> source1(NC + NR + 1, 0.0f);
+		vector<double> source2(NC + NR + 1, 0.0f);
+		for (int i = 1; i <= NC + NR; ++i) {
+			source1[i] = 1 / keff_old * (Xf1[i] * phi1_old[i] + Xf2[i] * phi2_old[i]);
+			source2[i] = Xs12[i] * phi1_old[i];
+		}
 
-		for (int counts = 0; counts < 5; ++counts)
-			for (int i = 1; i <= NC + NR; ++i)
-				phi_new[i] = (source[i] * h[i] - bidiagonal[i] * phi_old[i + 1] - bidiagonal[i - 1] * phi_new[i - 1]) / diagonal[i];
-
-		// new flux sum 
-		for (int i = 1; i <= NC + NR; ++i)
-			phi_sum_new += phi_new[i];
+		for (int counts = 0; counts < 4; ++counts)
+			for (int i = 1; i <= NC + NR; ++i) {
+				phi1_new[i] = (source1[i] * h[i] - bidiagonal1[i] * phi1_old[i + 1] - bidiagonal1[i - 1] * phi1_new[i - 1]) / diagonal1[i];
+				phi2_new[i] = (source2[i] * h[i] - bidiagonal2[i] * phi2_old[i + 1] - bidiagonal2[i - 1] * phi2_new[i - 1]) / diagonal2[i];
+			}
 
 		// keff calculation
-		keff_new = keff_old * (phi_sum_new / phi_sum_old);
+		double numerator = 0.0f;
+		double denominator = 0.0f;
+		for (int i = 1; i <= NC; ++i) {
+			numerator += Xf1[i] * phi1_new[i] + Xf2[i] * phi2_new[i]; // numerator of keff
+			denominator += Xf1[i] * phi1_old[i] + Xf2[i] * phi2_old[i]; // denominator of keff
+		}
+		keff_new = keff_old * (numerator / denominator);
 
 		// keff error calculation
 		errk = abs((keff_new - keff_old) / keff_old);
 
 		// flux error calculation
 		for (int i = 1; i < NC + NR; i++) {
-			double err1 = abs(phi_old[i] - phi_new[i]) / phi_old[i]; // [i]th error
-			double err2 = abs(phi_old[i + 1] - phi_new[i + 1]) / phi_old[i + 1]; // [i+1]th error
-			errp = max(err1, err2); // Max error
+			double errp11 = abs(phi1_old[i] - phi1_new[i]) / phi1_old[i]; // [i]th error of group 1
+			double errp12 = abs(phi1_old[i + 1] - phi1_new[i + 1]) / phi1_old[i + 1]; // [i+1]th error of group 1
+			errp1 = max(errp11, errp12); // Max error of group 1
+			double errp21 = abs(phi2_old[i] - phi2_new[i]) / phi2_old[i]; // [i]th error of group 2
+			double errp22 = abs(phi2_old[i + 1] - phi2_new[i + 1]) / phi2_old[i + 1]; // [i+1]th error of group 2
+			errp2 = max(errp21, errp22); // Max error of group 2
+			errp = max(errp1, errp2); // Max error between group 1,2
 		}
 
 		// reset old flux
-		for (int i = 1; i <= NC + NR; ++i)
-			phi_old[i] = phi_new[i];
+		for (int i = 1; i <= NC + NR; ++i) {
+			phi1_old[i] = phi1_new[i];
+			phi2_old[i] = phi2_new[i];
+		}
 
 		// reset keff
 		keff_old = keff_new;
 
-		// reset flux sum
-		phi_sum_new = 0.0f;
-		phi_sum_old = 0.0f;
-
 		++icounts;
-		//return keff_new;
 	}
 
 	// check end time

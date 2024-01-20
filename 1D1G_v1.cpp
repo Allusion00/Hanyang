@@ -120,7 +120,7 @@
 //	while (errk > crik || errp > crip) {
 //
 //		// old flux sum
-//		for (int i = 1; i <= NC + NR; ++i)
+//		for (int i = 1; i <= NC; ++i)
 //			phi_sum_old += phi_old[i];
 //	
 //		// Source vector define
@@ -133,7 +133,7 @@
 //				phi_new[i] = (source[i] * h[i] - bidiagonal[i] * phi_old[i + 1] - bidiagonal[i - 1] * phi_new[i - 1]) / diagonal[i];
 //		
 //		// new flux sum 
-//		for (int i = 1; i <= NC + NR; ++i)
+//		for (int i = 1; i <= NC; ++i)
 //			phi_sum_new += phi_new[i];
 //
 //		// keff calculation
