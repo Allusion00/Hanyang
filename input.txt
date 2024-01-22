@@ -1,0 +1,16 @@
+#CARD1 (# of Region, # of Energy group)
+2 2
+#CARD2 (D, Xs(Fission), Xs(Absorption))
+@Region(0) : Core
+1.3314 0.003258 0.006431
+0.2042 0.1387 0.09992
+@Region(1) : Reflector
+1.2291 0.0 0.0005903
+0.1588 0.0 0.01882
+#CARD3 (Xs(Only Down Scattering))
+@Region(0) : Core
+0.0 0.05979
+0.0 0.0
+@Region(1) : Reflector
+0.0 0.06163
+0.0 0.0
