@@ -1,0 +1,28 @@
+#CARD1(# of Material, # of Energy group, Region size(Xcm*Xcm), Number of Fine Mesh of Region(N*N))
+2 2 5
+#CARD2(Geomtry)
+1 5
+0 0 0 0 1
+#CARD3(Number of Fine mesh of each region(Horiziontal,Vertical))
+10 10 10 10 10
+10 10 10 10 10
+#CARD4(Boundary Condition Reflective(10), Flux Zero(11), Vacuum(12))
+10 10 10 12
+#CARD5(D, Xs(Fisson), Xs(Absorption), Xs(Only Down Scattering))
+@Region(0)
+1.3314 0.003258 0.006431
+0.2042 0.1387 0.09992
+@Region(1)
+1.2291 0.0 0.0005903
+0.1588 0.0 0.01882
+#CARD5( Xs) 
+@Region(0)
+0.0 0.05979
+0.0 0.0
+@Region(1)
+0.0 0.06163
+0.0 0.0
+#CARD5(Xi)
+1.0 0
+#CARD6(Convergence Critira : # of inner iteration, relative error of keff, Max relative error of source)
+5 1.0E-12 1.0E-05
