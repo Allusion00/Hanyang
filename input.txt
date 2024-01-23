@@ -3,11 +3,11 @@
 #CARD2 (Boundary Condition [Left Right] : 0 = reflective, 1 = flux zero, 2 = vacuum)
 0 1
 #CARD3 (Convergence criteria : # of inner iterations, relative error of keff, max relative error of flux)
-5 1.0E-10 1.0E-07
+4 1.0E-10 1.0E-07
 #CARD4 (Size of each region)
 40.0 10.0
 #CARD5 (# of fine meshes for each region)
-10 5
+80 20
 #CARD6 (D, Xs(Fission), Xs(Absorption))
 @Region(0) : Core
 1.3314 0.003258 0.006431

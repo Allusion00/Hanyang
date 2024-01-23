@@ -1,6 +1,9 @@
 #include "define.h"
 
 // 필요한 크기의 vector를 생성후 0.0으로 채운 뒤, input.file에서 정보 읽은 후 저장하는 방식
+// check start time
+
+double start_time = clock();
 
 int main() {
 	ifstream fileinput;
@@ -190,7 +193,7 @@ int main() {
 	for (int i = 0; i < g; ++i)
 		for (int j = 1; j <= NC + NR; ++j) {
 			for (int k = 0; k < g; ++k)
-				Xs_sum[i][j] += Xs[i][k][j];
+				Xs_sum[i][j] += Xs[k][i][j];
 			Xr[i][j] = Xa[i][j] + Xs_sum[i][j];
 		}
 
@@ -248,20 +251,72 @@ int main() {
 	double errp1 = 1.0f;
 	double errp2 = 1.0f;
 
-	// Source vector define [high E group][low E group][mesh] -> while문 안에 들어가야함
-	vector<vector<double>> source(g, vector<double>(NC + NR + 1, 0.0f));
-	vector<vector<double>> fission(g, vector<double>(NC + NR + 1, 0.0f));
-	vector<vector<double>> scattering(g, vector<double>(NC + NR + 1, 0.0f));
-	
-	for (int i = 0; i < g; ++i) {
-		for (int j = 1; j <= NC + NR; ++j) {
-			for (int k = 0; k < g; ++k) {
-				fission[i][j] += 1 / keff_old * Xf[k][j] * phi_old[k][j] * h[j] * xg[i];
-				scattering[i][j] += Xs[i][k][j] * phi_old[k][j] * h[j];
+	// outer iteration counts
+	int outiter = 1;
+
+	// outer iteration
+	while (errk > crik || errp > crip) {
+		// Source vector define [high E group][low E group][mesh] -> while문 안에 들어가야함
+		vector<vector<double>> source(g, vector<double>(NC + NR + 1, 0.0f));
+		vector<vector<double>> fission(g, vector<double>(NC + NR + 1, 0.0f));
+		vector<vector<double>> scattering(g, vector<double>(NC + NR + 1, 0.0f));
+
+		for (int i = 0; i < g; ++i) {
+			for (int j = 1; j <= NC + NR; ++j) {
+				for (int k = 0; k < g; ++k) {
+					fission[i][j] += 1 / keff_old * Xf[k][j] * phi_old[k][j] * h[j] * xg[i];
+					scattering[i][j] += Xs[i][k][j] * phi_old[k][j] * h[j];
+				}
+				source[i][j] = fission[i][j] + scattering[i][j];
 			}
-			source[i][j] = fission[i][j] + scattering[i][j];
-			cout << source[i][j] << " ";
 		}
-		cout << "\n";
+
+		// flux calculation (Gauss Seidel Method)
+		for (int counts = 1; counts < inneriter; ++counts)
+			for (int i = 0; i < g; ++i)
+				for (int j = 1; j <= NC + NR; ++j)
+					phi_new[i][j] = (source[i][j] - bidiagonal[i][j] * phi_old[i][j + 1] - bidiagonal[i][j - 1] * phi_new[i][j - 1]) / diagonal[i][j];
+
+		// keff calculation
+		double numerator = 0.0f;
+		double denominator = 0.0f;
+		for (int i = 1; i <= NC; ++i)
+			for (int j = 0; j < g; ++j) {
+				numerator += Xf[j][i] * phi_new[j][i];
+				denominator += Xf[j][i] * phi_old[j][i];
+			}
+		keff_new = keff_old * (numerator / denominator);
+
+		// keff error calculation
+		errk = abs((keff_new - keff_old) / keff_old);
+
+		
+		// flux error calculation
+		double errp1, errp2;
+		for (int i = 0; i < g; ++i)
+			for (int j = 1; j < NC + NR; ++j) {
+				errp1 = abs((phi_new[i][j] - phi_old[i][j]) / phi_old[i][j]);
+				errp2 = abs((phi_new[i][j + 1] - phi_old[i][j + 1]) / phi_old[i][j + 1]);
+				errp = max(errp1, errp2);
+			}
+
+		// reset flux
+		for (int i = 0; i < g; ++i)
+			for (int j = 1; j <= NC + NR; ++j)
+				phi_old[i][j] = phi_new[i][j];
+
+		// reset keff
+		keff_old = keff_new;
+
+		// outer iteration
+		++outiter;
 	}
+
+	// check end time
+	double end_time = clock();
+
+	// duration calculation
+	double duration = (end_time - start_time) / CLOCKS_PER_SEC;
+
+	cout << "keff : " << keff_new << ", error : " << max(errk, errp) << "\n" << "duration : " << duration << "s" << ", iteration counts : " << outiter;
 }
