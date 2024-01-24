@@ -1,3 +1,4 @@
+/*
 #include <iostream>
 #include <vector>
 
@@ -52,12 +53,12 @@ vector<double> phi1_new(NC + NR + 2, 0.0f);
 vector<double> phi2_old(NC + NR + 2, 0.0f); // group 2 flux
 vector<double> phi2_new(NC + NR + 2, 0.0f);
 
-// Boundary condition
-/*	vacuum condition : r = 0.5
-	current zero (reflective) condition : r = 0; 10E-10
-	flux zero condition : r = inf; 10E+10
-string BL = "reflective"; // Left boundary
-string BR = "flux zero"; // Right boundary */
+//// Boundary condition
+//vacuum condition : r = 0.5
+//	current zero (reflective) condition : r = 0; 10E-10
+//	flux zero condition : r = inf; 10E+10
+//string BL = "reflective"; // Left boundary
+//string BR = "flux zero"; // Right boundary
 
 // Boundary coefficient, r
 double rL = 10E-10f;
@@ -175,62 +176,62 @@ int main() {
 	// iteration counts
 	int icounts = 1;
 
-	while (errk > crik || errp > crip) {
+	//while (errk > crik || errp > crip) {
 
-		// Source vector define
-		vector<double> source1(NC + NR + 1, 0.0f);
-		vector<double> source2(NC + NR + 1, 0.0f);
-		for (int i = 1; i <= NC + NR; ++i) {
-			source1[i] = 1 / keff_old * (Xf1[i] * phi1_old[i] + Xf2[i] * phi2_old[i]);
-			source2[i] = Xs12[i] * phi1_old[i];
-		}
+	//	// Source vector define
+	//	vector<double> source1(NC + NR + 1, 0.0f);
+	//	vector<double> source2(NC + NR + 1, 0.0f);
+	//	for (int i = 1; i <= NC + NR; ++i) {
+	//		source1[i] = 1 / keff_old * (Xf1[i] * phi1_old[i] + Xf2[i] * phi2_old[i]);
+	//		source2[i] = Xs12[i] * phi1_old[i];
+	//	}
 
-		for (int counts = 0; counts < 4; ++counts)
-			for (int i = 1; i <= NC + NR; ++i) {
-				phi1_new[i] = (source1[i] * h[i] - bidiagonal1[i] * phi1_old[i + 1] - bidiagonal1[i - 1] * phi1_new[i - 1]) / diagonal1[i];
-				phi2_new[i] = (source2[i] * h[i] - bidiagonal2[i] * phi2_old[i + 1] - bidiagonal2[i - 1] * phi2_new[i - 1]) / diagonal2[i];
-			}
+	//	for (int counts = 0; counts < 4; ++counts)
+	//		for (int i = 1; i <= NC + NR; ++i) {
+	//			phi1_new[i] = (source1[i] * h[i] - bidiagonal1[i] * phi1_old[i + 1] - bidiagonal1[i - 1] * phi1_new[i - 1]) / diagonal1[i];
+	//			phi2_new[i] = (source2[i] * h[i] - bidiagonal2[i] * phi2_old[i + 1] - bidiagonal2[i - 1] * phi2_new[i - 1]) / diagonal2[i];
+	//		}
 
-		// keff calculation
-		double numerator = 0.0f;
-		double denominator = 0.0f;
-		for (int i = 1; i <= NC; ++i) {
-			numerator += Xf1[i] * phi1_new[i] + Xf2[i] * phi2_new[i]; // numerator of keff
-			denominator += Xf1[i] * phi1_old[i] + Xf2[i] * phi2_old[i]; // denominator of keff
-		}
-		keff_new = keff_old * (numerator / denominator);
+	//	// keff calculation
+	//	double numerator = 0.0f;
+	//	double denominator = 0.0f;
+	//	for (int i = 1; i <= NC; ++i) {
+	//		numerator += Xf1[i] * phi1_new[i] + Xf2[i] * phi2_new[i]; // numerator of keff
+	//		denominator += Xf1[i] * phi1_old[i] + Xf2[i] * phi2_old[i]; // denominator of keff
+	//	}
+	//	keff_new = keff_old * (numerator / denominator);
 
-		// keff error calculation
-		errk = abs((keff_new - keff_old) / keff_old);
+	//	// keff error calculation
+	//	errk = abs((keff_new - keff_old) / keff_old);
 
-		// flux error calculation
-		for (int i = 1; i < NC + NR; i++) {
-			double errp11 = abs(phi1_old[i] - phi1_new[i]) / phi1_old[i]; // [i]th error of group 1
-			double errp12 = abs(phi1_old[i + 1] - phi1_new[i + 1]) / phi1_old[i + 1]; // [i+1]th error of group 1
-			errp1 = max(errp11, errp12); // Max error of group 1
-			double errp21 = abs(phi2_old[i] - phi2_new[i]) / phi2_old[i]; // [i]th error of group 2
-			double errp22 = abs(phi2_old[i + 1] - phi2_new[i + 1]) / phi2_old[i + 1]; // [i+1]th error of group 2
-			errp2 = max(errp21, errp22); // Max error of group 2
-			errp = max(errp1, errp2); // Max error between group 1,2
-		}
+	//	// flux error calculation
+	//	for (int i = 1; i < NC + NR; i++) {
+	//		double errp11 = abs(phi1_old[i] - phi1_new[i]) / phi1_old[i]; // [i]th error of group 1
+	//		double errp12 = abs(phi1_old[i + 1] - phi1_new[i + 1]) / phi1_old[i + 1]; // [i+1]th error of group 1
+	//		errp1 = max(errp11, errp12); // Max error of group 1
+	//		double errp21 = abs(phi2_old[i] - phi2_new[i]) / phi2_old[i]; // [i]th error of group 2
+	//		double errp22 = abs(phi2_old[i + 1] - phi2_new[i + 1]) / phi2_old[i + 1]; // [i+1]th error of group 2
+	//		errp2 = max(errp21, errp22); // Max error of group 2
+	//		errp = max(errp1, errp2); // Max error between group 1,2
+	//	}
 
-		// reset old flux
-		for (int i = 1; i <= NC + NR; ++i) {
-			phi1_old[i] = phi1_new[i];
-			phi2_old[i] = phi2_new[i];
-		}
+	//	// reset old flux
+	//	for (int i = 1; i <= NC + NR; ++i) {
+	//		phi1_old[i] = phi1_new[i];
+	//		phi2_old[i] = phi2_new[i];
+	//	}
 
-		// reset keff
-		keff_old = keff_new;
+	//	// reset keff
+	//	keff_old = keff_new;
 
-		++icounts;
-	}
+	//	++icounts;
+	//}
 
-	// check end time
-	double end_time = clock();
+	//// check end time
+	//double end_time = clock();
 
-	// duration calculation
-	double duration = (end_time - start_time) / CLOCKS_PER_SEC;
+	//// duration calculation
+	//double duration = (end_time - start_time) / CLOCKS_PER_SEC;
 
-	cout << "keff : " << keff_new << ", error : " << max(errk, errp) << "\n" << "duration : " << duration << "s" << ", iteration counts : " << icounts;
-}
+	//cout << "keff : " << keff_new << ", error : " << max(errk, errp) << "\n" << "duration : " << duration << "s" << ", iteration counts : " << icounts;
+}*/
