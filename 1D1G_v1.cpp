@@ -55,7 +55,7 @@
 //
 //// Convergence criteria
 //double crik = 1.0E-10f;
-//double crip = 1.0E-10f;
+//double crip = 1.0E-07f;
 //
 //
 //int main() {
@@ -120,7 +120,7 @@
 //	while (errk > crik || errp > crip) {
 //
 //		// old flux sum
-//		for (int i = 1; i <= NC + NR; ++i)
+//		for (int i = 1; i <= NC; ++i)
 //			phi_sum_old += phi_old[i];
 //	
 //		// Source vector define
@@ -130,10 +130,10 @@
 //
 //		for (int counts = 0; counts < 5; ++counts)
 //			for (int i = 1; i <= NC + NR; ++i)
-//				phi_new[i] = (source[i] * h[i] - bidiagonal[i] * phi_old[i + 1] - bidiagonal[i - 1] * phi_new[i - 1]) / diagonal[i];
+//				phi_new[i] = (source[i] * h[i] - bidiagonal[i] * phi_new[i + 1] - bidiagonal[i - 1] * phi_new[i - 1]) / diagonal[i];
 //		
 //		// new flux sum 
-//		for (int i = 1; i <= NC + NR; ++i)
+//		for (int i = 1; i <= NC; ++i)
 //			phi_sum_new += phi_new[i];
 //
 //		// keff calculation
@@ -170,5 +170,5 @@
 //	// duration calculation
 //	double duration = (end_time - start_time) / CLOCKS_PER_SEC;
 //
-//	cout << "keff : " << keff_new << ", error : " << max(errk,errp) <<  "\n" << "duration : " << duration << "s" << ", iteration counts : " << icounts;
+//	cout << "keff : " << keff_new << ", error : " << min(errk,errp) <<  "\n" << "duration : " << duration << "s" << ", iteration counts : " << icounts;
 //}
