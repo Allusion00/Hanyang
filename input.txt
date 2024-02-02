@@ -1,0 +1,8 @@
+#CARD1 (geometry size[row column], geometry)
+5 5
+1 0 1 0 1
+0 1 0 1 0
+1 0 1 0 1
+0 1 0 1 0
+1 0 1 0 1
+#CARD2
