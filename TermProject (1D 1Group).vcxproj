@@ -133,7 +133,8 @@
     <ClCompile Include="1DMG_v1.cpp" />
     <ClCompile Include="2D1G_v1.cpp" />
     <ClCompile Include="2D2G_v1.cpp" />
-    <ClCompile Include="2DMG.cpp" />
+    <ClCompile Include="2DMG_v2.cpp" />
+    <ClCompile Include="2DMG_v1.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

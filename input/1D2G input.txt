@@ -1,19 +1,13 @@
 #CARD1 (# of Region, # of Energy group)
 2 2
-#CARD2 (Grid size[row column], Geometry size[row column], Geometry)
-10 10
-5 5
-0 0 0 0 1
-0 0 0 0 1
-0 0 0 0 1
-0 0 0 0 1
-0 0 0 0 1
-#CARD3 (# of fine meshes for each grid[row column])
-20 20
-#CARD4 (Boundary Condition [North / South / West / East] : 0 = reflective, 1 = flux zero, 2 = vacuum)
-0 0 0 1
-#CARD5 (Convergence criteria : # of inner iterations, relative error of keff, max relative error of flux)
+#CARD2 (Boundary Condition [Left Right] : 0 = reflective, 1 = flux zero, 2 = vacuum)
+0 1
+#CARD3 (Convergence criteria : # of inner iterations, relative error of keff, max relative error of flux)
 4 1.0E-10 1.0E-07
+#CARD4 (Size of each region)
+40.0 10.0
+#CARD5 (# of fine meshes for each region)
+80 20
 #CARD6 (D, Xs(Fission), Xs(Absorption))
 @Region(0) : Core
 1.3314 0.003258 0.006431
