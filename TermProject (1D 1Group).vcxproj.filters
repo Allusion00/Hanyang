@@ -30,10 +30,10 @@
     <ClCompile Include="2D2G_v1.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="2DMG_v2.cpp">
+    <ClCompile Include="2DMG_v1.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="2DMG_v1.cpp">
+    <ClCompile Include="2DMG_v2.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

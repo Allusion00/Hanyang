@@ -1,11 +1,12 @@
 #CARD1 (# of Region, # of Energy group)
 2 2
-#CARD2 (Grid size[row column], Geometry size[row column], Geometry)
+#CARD2 (Grid size[cm][row column], Geometry size[row column], Geometry)
 20 20
 2 2
 1 1
 0 1
-#CARD3 (# of fine meshes for each grid[row column])
+#CARD3 (# of fine meshes for each grid[horizontal vertical])
+12 12
 12 12
 #CARD4 (Boundary Condition [North / South / West / East] : 0 = reflective, 1 = flux zero, 2 = vacuum)
 1 0 0 1

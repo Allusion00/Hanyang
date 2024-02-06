@@ -12,75 +12,80 @@ double start_time = clock();
 int main() {
 	ifstream fileinput; // define ifstream as fileinput
 
-		// Select group by cin
-		int group;
-		cout << "Select group between 1, 2, 7, 0 (C5G7), 22 (Kang) : ";
-		cin >> group;
-		if (group == 1)
-			fileinput.open("2D1G input.txt");
-		else if (group == 2)
-			fileinput.open("2D2G input.txt");
-		else if (group == 7)
-			fileinput.open("2D7G input.txt");
-		else if (group == 0)
-			fileinput.open("C5G7 input.txt");
-		else if (group == 22)
-			fileinput.open("Kang input.txt");
-		else {
-			cout << "Please select group between 1, 2, 7";
-			return 0;
-		}
+	// Select group by cin
+	int group;
+	cout << "Select group between 1, 2, 7, 0 (C5G7), 22 (Kang) : ";
+	cin >> group;
+	if (group == 1)
+		fileinput.open("2D1G input.txt");
+	else if (group == 2)
+		fileinput.open("2D2G input.txt");
+	else if (group == 7)
+		fileinput.open("2D7G input.txt");
+	else if (group == 0)
+		fileinput.open("C5G7 input.txt");
+	else if (group == 22)
+		fileinput.open("Kang input.txt");
+	else {
+		cout << "Please select group between 1, 2, 7";
+		return 0;
+	}
 
 	string line; // define line as string character for getline
 
 	// Read CARD1 (# of Region, # of Energy group)
 	cout << "\n[CARD1]\n";
 	getline(fileinput, line);
-	int region , g; // # of Region, # of Energy group
+	int region, g; // # of Region, # of Energy group
 	fileinput >> region >> g;
 	cout << "# of Region : " << region << "\n" << "# of group : " << g << "\n\n"; // output for checking CARD1
 
-	// Read CARD2 (Geometry size [row column], Geometry)
+	// Read CARD2 (Grid size [row column], Geometry size [row column], Geometry)
 	cout << "[CARD2]\n";
 	getline(fileinput, line);
 	getline(fileinput, line);
 	double gridsizei, gridsizej;
-	fileinput >> gridsizei >> gridsizej;
+	fileinput >> gridsizei >> gridsizej; // Grid size [cm]
 	int row, column;
 	fileinput >> row >> column;
 	vector<vector<int>> grid(row, vector<int>(column, 0));
 	for (int i = 0; i < row; ++i) {
 		getline(fileinput, line);
 		for (int j = 0; j < column; ++j) {
-			fileinput >> grid[j][i];
-			cout << grid[j][i] << " ";
+			fileinput >> grid[i][j];
+			cout << grid[i][j] << " ";
 		}
 		cout << "\n";
 	}
-	
-	//// Read CARD3 (# of fine meshes for each grid [horizontal \n vertical]
-	//getline(fileinput, line);
-	//getline(fileinput, line);
-	//vector<int> horizontal(column, 0);
-	//vector<int> vertical(row, 0);
-	//int Ni, Nj;
-	//for (int i = 0; i < column; ++i)
-	//	Ni += gridsizei / horizontal[i];
-	//for (int j = 0; j < row; ++j)
-	//	Nj += gridsizej / vertical[j];
-	
-	// Read CARD3 (# of fine meshes for each grid [row column])
+
+	// Read CARD3 (# of fine meshes for each grid [horizontal vertical])
 	cout << "\n[CARD3]\n";
 	getline(fileinput, line);
 	getline(fileinput, line);
-	double meshnumi, meshnumj;
-	fileinput >> meshnumj >> meshnumi;
-	double meshsizei = gridsizei / meshnumi;
-	double meshsizej = gridsizej / meshnumj;
-	int Ni = meshnumi * column;
-	int Nj = meshnumj * row;
+	vector<int> horizontal(column, 0);
+	vector<int> vertical(row, 0);
+	int Ni = 0;
+	int Nj = 0;
+	for (int i = 0; i < column; ++i) {
+		fileinput >> horizontal[i];
+		Ni += horizontal[i];
+	}
+	getline(fileinput, line);
+	for (int j = 0; j < row; ++j) {
+		fileinput >> vertical[j];
+		Nj += vertical[j];
+	}
+	vector<double> hi(Ni + 1, 0.0f);
+	vector<double> hj(Nj + 1, 0.0f);
+	for (int i = 0; i < column; ++i)
+		for (int imesh = i * horizontal[i] + 1; imesh <= (i + 1) * horizontal[i]; ++imesh)
+			for (int j = 0; j < row; ++j)
+				for (int jmesh = j * vertical[j] + 1; jmesh <= (j + 1) * vertical[j]; ++jmesh) {
+					hi[imesh] = gridsizei / horizontal[i];
+					hj[jmesh] = gridsizej / vertical[j];
+				}
 	cout << "Mesh zone type [row X column] : " << Nj << " X " << Ni << "\n";
-	
+
 	// Read CARD4 (Boundary Condition[Left Right] : 0 = reflective, 1 = flux zero, 2 = vacuum)
 	cout << "\n[CARD4]\n";
 	getline(fileinput, line);
@@ -168,12 +173,12 @@ int main() {
 	vector<vector<vector<double>>> Xa(g, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
 	for (int group = 0; group < g; ++group)
 		for (int i = 0; i < column; ++i)
-			for (int imesh = i * meshnumi + 1; imesh <= (i + 1) * meshnumi; ++imesh)
+			for (int imesh = i * horizontal[i] + 1; imesh <= (i + 1) * horizontal[i]; ++imesh)
 				for (int j = 0; j < row; ++j)
-					for (int jmesh = j * meshnumj + 1; jmesh <= (j + 1) * meshnumj; ++jmesh) {
-						D[group][imesh][jmesh] = Data1[grid[i][j]][group][0];
-						Xf[group][imesh][jmesh] = Data1[grid[i][j]][group][1];
-						Xa[group][imesh][jmesh] = Data1[grid[i][j]][group][2];
+					for (int jmesh = j * vertical[j] + 1; jmesh <= (j + 1) * vertical[j]; ++jmesh) {
+						D[group][imesh][jmesh] = Data1[grid[j][i]][group][0];
+						Xf[group][imesh][jmesh] = Data1[grid[j][i]][group][1];
+						Xa[group][imesh][jmesh] = Data1[grid[j][i]][group][2];
 					}
 
 	// scattering X section [cm-1] [high E group][low E group][i mesh][j mesh]
@@ -181,10 +186,10 @@ int main() {
 	for (int hgroup = 0; hgroup < g; ++hgroup)
 		for (int lgroup = 0; lgroup < g; ++lgroup)
 			for (int i = 0; i < column; ++i)
-				for (int imesh = i * meshnumi + 1; imesh <= (i + 1) * meshnumi; ++imesh)
+				for (int imesh = i * horizontal[i] + 1; imesh <= (i + 1) * horizontal[i]; ++imesh)
 					for (int j = 0; j < row; ++j)
-						for (int jmesh = j * meshnumj + 1; jmesh <= (j + 1) * meshnumj; ++jmesh)
-							Xs[hgroup][lgroup][imesh][jmesh] = Data2[grid[i][j]][hgroup][lgroup];
+						for (int jmesh = j * vertical[j] + 1; jmesh <= (j + 1) * vertical[j]; ++jmesh)
+							Xs[hgroup][lgroup][imesh][jmesh] = Data2[grid[j][i]][hgroup][lgroup];
 
 	// removal X section [cm-1] [group][i mesh][j mesh]
 	vector<vector<vector<double>>> Xr(g, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
@@ -226,8 +231,8 @@ int main() {
 			betaj[i][j][0] = r[0] / 2; // j direction North boundary beta
 			betaj[i][j][Nj + 1] = r[1] / 2; // j direction South boundary beta
 			for (int k = 1; k <= Nj; ++k) {
-				betai[i][j][k] = D[i][j][k] / meshsizei; // i direction beta
-				betaj[i][j][k] = D[i][j][k] / meshsizej; // j direction beta
+				betai[i][j][k] = D[i][j][k] / hi[j]; // i direction beta
+				betaj[i][j][k] = D[i][j][k] / hj[k]; // j direction beta
 			}
 		}
 	}
@@ -255,11 +260,11 @@ int main() {
 	for (int i = 0; i < g; ++i)
 		for (int j = 1; j <= Ni; ++j)
 			for (int k = 1; k <= Nj; ++k) {
-				diagonal[i][j][k] = D_tilderE[i][j][k] / meshsizei + D_tilderW[i][j][k] / meshsizei + D_tilderN[i][j][k] / meshsizej + D_tilderS[i][j][k] / meshsizej + Xr[i][j][k];
-				bidiagonalN[i][j][k] = -D_tilderN[i][j][k] / meshsizej;
-				bidiagonalS[i][j][k] = -D_tilderS[i][j][k] / meshsizej;
-				bidiagonalW[i][j][k] = -D_tilderW[i][j][k] / meshsizei;
-				bidiagonalE[i][j][k] = -D_tilderE[i][j][k] / meshsizei;
+				diagonal[i][j][k] = D_tilderE[i][j][k] / hi[j] + D_tilderW[i][j][k] / hi[j] + D_tilderN[i][j][k] / hj[k] + D_tilderS[i][j][k] / hj[k] + Xr[i][j][k];
+				bidiagonalN[i][j][k] = -D_tilderN[i][j][k] / hj[k];
+				bidiagonalS[i][j][k] = -D_tilderS[i][j][k] / hj[k];
+				bidiagonalW[i][j][k] = -D_tilderW[i][j][k] / hi[j];
+				bidiagonalE[i][j][k] = -D_tilderE[i][j][k] / hi[j];
 			}
 
 
@@ -345,19 +350,19 @@ int main() {
 		<< "keff : " << keff_new << ", error : " << min(errk, errp) << "\n"
 		<< "duration : " << duration << "ms" << ", iteration counts : " << outiter << "\n\n";
 
-		// write
-		ofstream fileoutput;
-		fileoutput.open("output.txt");
-		// write flux distribution for each group
-		for (int i = 0; i < g; ++i) {
-			fileoutput << "group " << i + 1 << "\n";
-			for (int j = 1; j <= Ni; ++j) {
-				for (int k = 1; k <= Nj; ++k) {
-					fileoutput << phi_new[i][j][k] << "\t";
-				}
-				fileoutput << "\n";
+	// write
+	ofstream fileoutput;
+	fileoutput.open("output.txt");
+	// write flux distribution for each group
+	for (int i = 0; i < g; ++i) {
+		fileoutput << "group " << i + 1 << "\n";
+		for (int j = 1; j <= Ni; ++j) {
+			for (int k = 1; k <= Nj; ++k) {
+				fileoutput << phi_new[i][j][k] << "\t";
 			}
-			fileoutput << "\n\n";
+			fileoutput << "\n";
 		}
+		fileoutput << "\n\n";
+	}
 
 }
