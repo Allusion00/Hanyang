@@ -68,19 +68,27 @@ int main() {
 	int Nj = 0;
 	for (int i = 0; i < column; ++i) {
 		fileinput >> horizontal[i];
-		Ni += horizontal[i];
 	}
 	getline(fileinput, line);
 	for (int j = 0; j < row; ++j) {
 		fileinput >> vertical[j];
-		Nj += vertical[j];
 	}
+	vector<int> horizontalsum(column + 1, 0);
+	vector<int> verticalsum(row + 1, 0);
+	for (int i = 1; i <= column; ++i)
+		for (int j = 0; j <= i - 1; ++j)
+			horizontalsum[i] += horizontal[j];
+	for (int i = 1; i <= row; ++i)
+		for (int j = 0; j <= i - 1; ++j)
+			verticalsum[i] += vertical[j];
+	Ni = horizontalsum[column];
+	Nj = verticalsum[row];
 	vector<double> hi(Ni + 1, 0.0f);
 	vector<double> hj(Nj + 1, 0.0f);
 	for (int i = 0; i < column; ++i)
-		for (int imesh = i * horizontal[i] + 1; imesh <= (i + 1) * horizontal[i]; ++imesh)
+		for (int imesh = horizontalsum[i] + 1; imesh <= horizontalsum[i + 1]; ++imesh)
 			for (int j = 0; j < row; ++j)
-				for (int jmesh = j * vertical[j] + 1; jmesh <= (j + 1) * vertical[j]; ++jmesh) {
+				for (int jmesh = verticalsum[j] + 1; jmesh <= verticalsum[j + 1]; ++jmesh) {
 					hi[imesh] = gridsizei / horizontal[i];
 					hj[jmesh] = gridsizej / vertical[j];
 				}
@@ -173,9 +181,9 @@ int main() {
 	vector<vector<vector<double>>> Xa(g, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
 	for (int group = 0; group < g; ++group)
 		for (int i = 0; i < column; ++i)
-			for (int imesh = i * horizontal[i] + 1; imesh <= (i + 1) * horizontal[i]; ++imesh)
+			for (int imesh = horizontalsum[i] + 1; imesh <= horizontalsum[i + 1]; ++imesh)
 				for (int j = 0; j < row; ++j)
-					for (int jmesh = j * vertical[j] + 1; jmesh <= (j + 1) * vertical[j]; ++jmesh) {
+					for (int jmesh = verticalsum[j] + 1; jmesh <= verticalsum[j + 1]; ++jmesh) {
 						D[group][imesh][jmesh] = Data1[grid[j][i]][group][0];
 						Xf[group][imesh][jmesh] = Data1[grid[j][i]][group][1];
 						Xa[group][imesh][jmesh] = Data1[grid[j][i]][group][2];
@@ -186,9 +194,9 @@ int main() {
 	for (int hgroup = 0; hgroup < g; ++hgroup)
 		for (int lgroup = 0; lgroup < g; ++lgroup)
 			for (int i = 0; i < column; ++i)
-				for (int imesh = i * horizontal[i] + 1; imesh <= (i + 1) * horizontal[i]; ++imesh)
+				for (int imesh = horizontalsum[i] + 1; imesh <= horizontalsum[i + 1]; ++imesh)
 					for (int j = 0; j < row; ++j)
-						for (int jmesh = j * vertical[j] + 1; jmesh <= (j + 1) * vertical[j]; ++jmesh)
+						for (int jmesh = verticalsum[j] + 1; jmesh <= verticalsum[j + 1]; ++jmesh)
 							Xs[hgroup][lgroup][imesh][jmesh] = Data2[grid[j][i]][hgroup][lgroup];
 
 	// removal X section [cm-1] [group][i mesh][j mesh]

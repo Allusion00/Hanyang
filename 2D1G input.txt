@@ -6,7 +6,7 @@
 0 0 0 0 1
 #CARD3 (# of fine meshes for each grid[horizontal vertical])
 20 20 20 20 20
-20
+40
 #CARD4 (Boundary Condition [North / South / West / East] : 0 = reflective, 1 = flux zero, 2 = vacuum)
 0 0 0 1
 #CARD5 (Convergence criteria : # of inner iterations, relative error of keff, max relative error of flux)
