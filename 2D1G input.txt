@@ -6,7 +6,7 @@
 0 0 0 0 1
 #CARD3 (# of fine meshes for each grid[horizontal vertical])
 20 20 20 20 20
-40
+20
 #CARD4 (Boundary Condition [North / South / West / East] : 0 = reflective, 1 = flux zero, 2 = vacuum)
 0 0 0 1
 #CARD5 (Convergence criteria : # of inner iterations, relative error of keff, max relative error of flux)
@@ -16,7 +16,7 @@
 6.8 0.65 0.300
 @Region(1) : Reflector
 5.8 0.0 0.01
-#CARD7 (Xs(Only Down Scattering))
+#CARD7 (Xs(Scattering))
 @Region(0) : Core
 0.0
 @Region(1) : Reflector
