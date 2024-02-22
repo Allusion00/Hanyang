@@ -42,5 +42,14 @@
     <ClCompile Include="2DMG_v2.2.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="2DMG_parallel_v2.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="2DMG_v3.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="2DMG_assemnbly.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

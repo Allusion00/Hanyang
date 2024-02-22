@@ -1,25 +1,30 @@
 #CARD1 (# of Region, # of Energy group)
-2 1
+2 2
 #CARD2 (Grid size[cm][row column], Geometry size[row column], Geometry)
-10 10
-1 5
-0 0 0 0 1
+20 20
+2 2
+1 1
+0 1
 #CARD3 (# of fine meshes for each grid[horizontal vertical])
-20 20 20 20 20
-20
-#CARD4 (Boundary Condition [North / South / West / East] : 10 = reflective, 11 = flux zero, 12 = vacuum)
-10 10 10 11
+12 12
+12 12
+#CARD4 (Boundary Condition [North / South / West / East] : 0 = reflective, 1 = flux zero, 2 = vacuum)
+1 0 0 1
 #CARD5 (Convergence criteria : # of inner iterations, relative error of keff, max relative error of flux)
 4 1.0E-10 1.0E-07
 #CARD6 (D, Xs(Fission), Xs(Absorption))
 @Region(0) : Core
-6.8 0.65 0.300
+1.5 0.0 0.0023
+0.4 0.218 0.2
 @Region(1) : Reflector
-5.8 0.0 0.01
+1.2 0.0 0.001
+0.15 0.0 0.02
 #CARD7 (Xs(Scattering))
 @Region(0) : Core
-0.0
+0.0 0.06
+0.0 0.0
 @Region(1) : Reflector
-0.0
+0.0 0.1
+0.0 0.0
 #CARD8 (xg : fraction of fission neutrons for each group)
-1.0
+1.0 0.0

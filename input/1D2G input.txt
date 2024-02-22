@@ -15,7 +15,7 @@
 @Region(1) : Reflector
 1.2291 0.0 0.0005903
 0.1588 0.0 0.01882
-#CARD7 (Xs(Only Down Scattering))
+#CARD7 (Xs(Scattering))
 @Region(0) : Core
 0.0 0.05979
 0.0 0.0

@@ -2,6 +2,7 @@
 //#include <fstream>		// 파일 입출력 할 수 있게 만드는 라이브러리
 //#include <string>
 //#include <vector>
+//#include <omp.h>
 //using namespace std;	// 이름의 충돌을 막아주고, 프로그램의 가독성을 높여주는 코드
 //// Visual 2008부터는 iostream.h를 기본으로 지원하지 않기 때문에 #include <iostream>을 하거나 cout를 쓰려면 이 코드를 써야한다.
 //
@@ -176,42 +177,42 @@
 //    cout << "\n\n"; // output for checking CARD8
 //
 //    // Diffusion coefficient [cm] [group][i mesh][j mesh]
-//    vector<vector<vector<double>>> D(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
+//    vector<vector<vector<double>>> D(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
 //    // fission X section [cm-1] [group][i mesh][j mesh]
-//    vector<vector<vector<double>>> Xf(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
+//    vector<vector<vector<double>>> Xf(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
 //    // absorption X section [cm-1] [group][i mesh][j mesh]
-//    vector<vector<vector<double>>> Xa(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
-//    for (int g = 0; g < group; ++g)
-//        for (int column = 0; column < columnsize; ++column)
-//            for (int i = horizontalsum[column] + 1; i <= horizontalsum[column + 1]; ++i)
-//                for (int row = 0; row < rowsize; ++row)
-//                    for (int j = verticalsum[row] + 1; j <= verticalsum[row + 1]; ++j) {
-//                        D[g][i][j] = CARD6[grid[row][column]][g][0];
-//                        Xf[g][i][j] = CARD6[grid[row][column]][g][1];
-//                        Xa[g][i][j] = CARD6[grid[row][column]][g][2];
+//    vector<vector<vector<double>>> Xa(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
+//    for (int column = 0; column < columnsize; ++column)
+//        for (int i = horizontalsum[column] + 1; i <= horizontalsum[column + 1]; ++i)
+//            for (int row = 0; row < rowsize; ++row)
+//                for (int j = verticalsum[row] + 1; j <= verticalsum[row + 1]; ++j)
+//                    for (int g = 0; g < group; ++g) {
+//                        D[i][j][g] = CARD6[grid[row][column]][g][0];
+//                        Xf[i][j][g] = CARD6[grid[row][column]][g][1];
+//                        Xa[i][j][g] = CARD6[grid[row][column]][g][2];
 //                    }
 //
-//    // scattering X section [cm-1] [high E group][low E group][i mesh][j mesh]
-//    vector<vector<vector<vector<double>>>> Xs(group, vector<vector<vector<double>>>(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f))));
-//    for (int hg = 0; hg < group; ++hg)
-//        for (int lg = 0; lg < group; ++lg)
-//            for (int column = 0; column < columnsize; ++column)
-//                for (int i = horizontalsum[column] + 1; i <= horizontalsum[column + 1]; ++i)
-//                    for (int row = 0; row < rowsize; ++row)
-//                        for (int j = verticalsum[row] + 1; j <= verticalsum[row + 1]; ++j)
-//                            Xs[hg][lg][i][j] = CARD7[grid[row][column]][hg][lg];
+//    // scattering X section [cm-1] [i mesh][j mesh][high E group][low E group]
+//    vector<vector<vector<vector<double>>>> Xs(Ni + 1, vector<vector<vector<double>>>(Nj + 1, vector<vector<double>>(group, vector<double>(group, 0.0f))));
+//    for (int column = 0; column < columnsize; ++column)
+//        for (int i = horizontalsum[column] + 1; i <= horizontalsum[column + 1]; ++i)
+//            for (int row = 0; row < rowsize; ++row)
+//                for (int j = verticalsum[row] + 1; j <= verticalsum[row + 1]; ++j)
+//                    for (int hg = 0; hg < group; ++hg)
+//                        for (int lg = 0; lg < group; ++lg)
+//                            Xs[i][j][hg][lg] = CARD7[grid[row][column]][hg][lg];
 //
-//    // removal X section [cm-1] [group][i mesh][j mesh]
-//    vector<vector<vector<double>>> Xr(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
-//    for (int g1 = 0; g1 < group; ++g1)
-//        for (int i = 1; i <= Ni; ++i)
-//            for (int j = 1; j <= Nj; ++j) {
+//    // removal X section [cm-1] [i mesh][j mesh][group]
+//    vector<vector<vector<double>>> Xr(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
+//    for (int i = 1; i <= Ni; ++i)
+//        for (int j = 1; j <= Nj; ++j)
+//            for (int g1 = 0; g1 < group; ++g1) {
 //                for (int g2 = 0; g2 < group; ++g2) {
 //                    if (g1 == g2)
 //                        continue;
-//                    Xr[g1][i][j] += Xs[g2][g1][i][j];
-//                }   
-//                Xr[g1][i][j] += Xa[g1][i][j];
+//                    Xr[i][j][g1] += Xs[i][j][g2][g1];
+//                }
+//                Xr[i][j][g1] += Xa[i][j][g1];
 //            }
 //
 //
@@ -219,54 +220,56 @@
 //    double keff_old = 1.0f;
 //    double keff_new = 0.0f;
 //
-//    // flux vector define [group][i mesh][j mesh]
-//    vector<vector<vector<double>>> phi_old(group, vector<vector<double>>(Ni + 2, vector<double>(Nj + 2, 0.0f)));
-//    vector<vector<vector<double>>> phi_new(group, vector<vector<double>>(Ni + 2, vector<double>(Nj + 2, 0.0f)));
-//    for (int g = 0; g < group; ++g)
-//        for (int i = 1; i <= Ni; ++i)
-//            for (int j = 1; j <= Nj; ++j) {
-//                phi_old[g][i][j] = 1.0f;
-//                phi_new[g][i][j] = 1.0f;
+//    // flux vector define [i mesh][j mesh][group]
+//    vector<vector<vector<double>>> phi_old(Ni + 2, vector<vector<double>>(Nj + 2, vector<double>(group, 0.0f)));
+//    vector<vector<vector<double>>> phi_new(Ni + 2, vector<vector<double>>(Nj + 2, vector<double>(group, 0.0f)));
+//    for (int i = 1; i <= Ni; ++i)
+//        for (int j = 1; j <= Nj; ++j)
+//            for (int g = 0; g < group; ++g) {
+//                phi_old[i][j][g] = 1.0f;
+//                phi_new[i][j][g] = 1.0f;
 //            }
 //
-//    // beta vector define [group][i mesh][j mesh]
-//    vector<vector<vector<double>>> betai(group, vector<vector<double>>(Ni + 2, vector<double>(Nj + 2, 0.0f))); // i direction beta vector
-//    vector<vector<vector<double>>> betaj(group, vector<vector<double>>(Ni + 2, vector<double>(Nj + 2, 0.0f))); // j direction beta vector
-//    for (int g = 0; g < group; ++g) {
-//        for (int j = 1; j <= Nj; ++j) {
-//            betai[g][0][j] = b[2] / 2; // i direction West boundary beta
-//            betai[g][Ni + 1][j] = b[3] / 2; // i direction East boundary beta
+//    // beta vector define [i mesh][j mesh][group]
+//    vector<vector<vector<double>>> betai(Ni + 2, vector<vector<double>>(Nj + 2, vector<double>(group, 0.0f))); // i direction beta vector
+//    vector<vector<vector<double>>> betaj(Ni + 2, vector<vector<double>>(Nj + 2, vector<double>(group, 0.0f))); // j direction beta vector
+//    for (int j = 1; j <= Nj; ++j)
+//        for (int g = 0; g < group; ++g) {
+//            betai[0][j][g] = b[2] / 2; // i direction West boundary beta
+//            betai[Ni + 1][j][g] = b[3] / 2; // i direction East boundary beta
 //        }
-//        for (int i = 1; i <= Ni; ++i) {
-//            betaj[g][i][0] = b[0] / 2; // j direction North boundary beta
-//            betaj[g][i][Nj + 1] = b[1] / 2; // j direction South boundary beta
-//            for (int j = 1; j <= Nj; ++j) {
-//                betai[g][i][j] = D[g][i][j] / hi[i]; // i direction beta
-//                betaj[g][i][j] = D[g][i][j] / hj[j]; // j direction beta
-//            }
+//    for (int i = 1; i <= Ni; ++i)
+//        for (int g = 0; g < group; ++g) {
+//            betaj[i][0][g] = b[0] / 2; // j direction North boundary beta
+//            betaj[i][Nj + 1][g] = b[1] / 2; // j direction South boundary beta   
 //        }
-//    }
-//
-//    // D tilder vector define [group][i mesh][j mesh]
-//    vector<vector<vector<double>>> D_tilderi(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
-//    vector<vector<vector<double>>> D_tilderj(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
-//    for (int g = 0; g < group; ++g)
-//        for (int i = 0; i <= Ni; ++i)
-//            for (int j = 0; j <= Nj; ++j) {
-//                D_tilderi[g][i][j] = 2 * betai[g][i][j] * betai[g][i + 1][j] / (betai[g][i][j] + betai[g][i + 1][j]);
-//                D_tilderj[g][i][j] = 2 * betaj[g][i][j] * betaj[g][i][j + 1] / (betaj[g][i][j] + betaj[g][i][j + 1]);
+//    for (int i = 1; i <= Ni; ++i)
+//        for (int j = 1; j <= Nj; ++j)
+//            for (int g = 0; g < group; ++g) {
+//                betai[i][j][g] = D[i][j][g] / hi[i]; // i direction beta
+//                betaj[i][j][g] = D[i][j][g] / hj[j]; // j direction beta
 //            }
 //
-//    // Matrix M define diagonal, bidiagonal [group][i mesh][j mesh]
-//    vector<vector<vector<double>>> diagonal(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
-//    vector<vector<vector<double>>> bidiagonali(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
-//    vector<vector<vector<double>>> bidiagonalj(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
-//    for (int g = 0; g < group; ++g)
-//        for (int i = 1; i <= Ni; ++i)
-//            for (int j = 1; j <= Nj; ++j) {
-//                diagonal[g][i][j] = D_tilderi[g][i][j] / hi[i] + D_tilderi[g][i - 1][j] / hi[i] + D_tilderj[g][i][j - 1] / hj[j] + D_tilderj[g][i][j] / hj[j] + Xr[g][i][j];
-//                bidiagonali[g][i][j] = -D_tilderi[g][i][j] / hi[i];
-//                bidiagonalj[g][i][j] = -D_tilderj[g][i][j] / hj[j];
+//    // D tilder vector define [i mesh][j mesh][group]
+//    vector<vector<vector<double>>> D_tilderi(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
+//    vector<vector<vector<double>>> D_tilderj(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
+//    for (int i = 0; i <= Ni; ++i)
+//        for (int j = 0; j <= Nj; ++j)
+//            for (int g = 0; g < group; ++g) {
+//                D_tilderi[i][j][g] = 2 * betai[i][j][g] * betai[i + 1][j][g] / (betai[i][j][g] + betai[i + 1][j][g]);
+//                D_tilderj[i][j][g] = 2 * betaj[i][j][g] * betaj[i][j + 1][g] / (betaj[i][j][g] + betaj[i][j + 1][g]);
+//            }
+//
+//    // Matrix M define diagonal, bidiagonal [i mesh][j mesh][group]
+//    vector<vector<vector<double>>> diagonal(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
+//    vector<vector<vector<double>>> bidiagonali(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
+//    vector<vector<vector<double>>> bidiagonalj(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
+//    for (int i = 1; i <= Ni; ++i)
+//        for (int j = 1; j <= Nj; ++j)
+//            for (int g = 0; g < group; ++g) {
+//                diagonal[i][j][g] = D_tilderi[i][j][g] / hi[i] + D_tilderi[i - 1][j][g] / hi[i] + D_tilderj[i][j - 1][g] / hj[j] + D_tilderj[i][j][g] / hj[j] + Xr[i][j][g];
+//                bidiagonali[i][j][g] = -D_tilderi[i][j][g] / hi[i];
+//                bidiagonalj[i][j][g] = -D_tilderj[i][j][g] / hj[j];
 //            }
 //
 //
@@ -282,25 +285,27 @@
 //    // outer iteration
 //    while (errk > crik || errp > crip) {
 //        // Source vector define [high E group][low E group][i mesh][j mesh]
-//        vector<vector<vector<double>>> source(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
-//        for (int g1 = 0; g1 < group; ++g1) {
-//            for (int i = 1; i <= Ni; ++i)
-//                for (int j = 1; j <= Nj; ++j) {
+//        vector<vector<vector<double>>> source(Ni + 1, vector<vector<double>>(Nj + 1, vector<double>(group, 0.0f)));
+//        #pragma omp parallel for
+//        for (int i = 1; i <= Ni; ++i)
+//            for (int j = 1; j <= Nj; ++j)
+//                for (int g1 = 0; g1 < group; ++g1) {
 //                    for (int g2 = 0; g2 < group; ++g2) {
-//                        source[g1][i][j] += 1 / keff_old * Xf[g2][i][j] * phi_old[g2][i][j] * xg[g1];
+//                        source[i][j][g1] += 1 / keff_old * Xf[i][j][g2] * phi_old[i][j][g2] * xg[g1];
 //                        if (g1 == g2)
 //                            continue;
-//                        source[g1][i][j] += Xs[g1][g2][i][j] * phi_old[g2][i][j];
+//                        source[i][j][g1] += Xs[i][j][g1][g2] * phi_old[i][j][g2];
 //                    }
 //                }
-//        }
+//        
 //
 //        // flux iteration (Gauss Seidel Method)
 //        for (int counts = 1; counts <= inneriter; ++counts)
+//            #pragma omp parallel for
 //            for (int g = 0; g < group; ++g)
 //                for (int i = 1; i <= Ni; ++i)
 //                    for (int j = 1; j <= Nj; ++j)
-//                        phi_new[g][i][j] = (source[g][i][j] - bidiagonali[g][i][j] * phi_new[g][i + 1][j] - bidiagonali[g][i - 1][j] * phi_new[g][i - 1][j] - bidiagonalj[g][i][j - 1] * phi_new[g][i][j - 1] - bidiagonalj[g][i][j] * phi_new[g][i][j + 1]) / diagonal[g][i][j];
+//                        phi_new[i][j][g] = (source[i][j][g] - bidiagonali[i][j][g] * phi_new[i + 1][j][g] - bidiagonali[i - 1][j][g] * phi_new[i - 1][j][g] - bidiagonalj[i][j - 1][g] * phi_new[i][j - 1][g] - bidiagonalj[i][j][g] * phi_new[i][j + 1][g]) / diagonal[i][j][g];
 //
 //        // keff calculation
 //        double numerator = 0.0f;
@@ -308,8 +313,8 @@
 //        for (int i = 1; i <= Ni; ++i)
 //            for (int j = 1; j <= Nj; ++j)
 //                for (int g = 0; g < group; ++g) {
-//                    numerator += Xf[g][i][j] * phi_new[g][i][j];
-//                    denominator += Xf[g][i][j] * phi_old[g][i][j];
+//                    numerator += Xf[i][j][g] * phi_new[i][j][g];
+//                    denominator += Xf[i][j][g] * phi_old[i][j][g];
 //                }
 //        keff_new = keff_old * (numerator / denominator);
 //
@@ -319,19 +324,19 @@
 //
 //        // flux error calculation
 //        double errp1, errp2;
-//        for (int g = 0; g < group; ++g)
-//            for (int i = 1; i < Ni; ++i)
-//                for (int j = 1; j <= Nj; ++j) {
-//                    errp1 = abs((phi_new[g][i][j] - phi_old[g][i][j]) / phi_old[g][i][j]);
-//                    errp2 = abs((phi_new[g][i + 1][j] - phi_old[g][i + 1][j]) / phi_old[g][i + 1][j]);
+//        for (int i = 1; i < Ni; ++i)
+//            for (int j = 1; j <= Nj; ++j)
+//                for (int g = 0; g < group; ++g) {
+//                    errp1 = abs((phi_new[i][j][g] - phi_old[i][j][g]) / phi_old[i][j][g]);
+//                    errp2 = abs((phi_new[i + 1][j][g] - phi_old[i + 1][j][g]) / phi_old[i + 1][j][g]);
 //                    errp = max(errp1, errp2);
 //                }
 //
 //        // reset flux
-//        for (int g = 0; g < group; ++g)
-//            for (int i = 1; i <= Ni; ++i)
-//                for (int j = 1; j <= Nj; ++j)
-//                    phi_old[g][i][j] = phi_new[g][i][j];
+//        for (int i = 1; i <= Ni; ++i)
+//            for (int j = 1; j <= Nj; ++j)
+//                for (int g = 0; g < group; ++g)
+//                    phi_old[i][j][g] = phi_new[i][j][g];
 //
 //        // reset keff
 //        keff_old = keff_new;
@@ -360,7 +365,7 @@
 //        fileoutput << "group " << g + 1 << "\n";
 //        for (int i = 1; i <= Ni; ++i) {
 //            for (int j = 1; j <= Nj; ++j) {
-//                fileoutput << phi_new[g][i][j] << "\t";
+//                fileoutput << phi_new[i][j][g] << "\t";
 //            }
 //            fileoutput << "\n";
 //        }

@@ -119,6 +119,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,10 +134,13 @@
     <ClCompile Include="1DMG_v1.cpp" />
     <ClCompile Include="2D1G_v1.cpp" />
     <ClCompile Include="2D2G_v1.cpp" />
+    <ClCompile Include="2DMG_assemnbly.cpp" />
     <ClCompile Include="2DMG_parallel.cpp" />
+    <ClCompile Include="2DMG_parallel_v2.cpp" />
     <ClCompile Include="2DMG_v2.2.cpp" />
     <ClCompile Include="2DMG_v2.cpp" />
     <ClCompile Include="2DMG_v1.cpp" />
+    <ClCompile Include="2DMG_v3.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

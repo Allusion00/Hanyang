@@ -11,57 +11,73 @@
 //
 //int main() {
 //    ifstream fileinput; // define ifstream as fileinput
-//
-//    // Select group by cin
-//    int groupinput;
-//    cout << "Select group between 1, 2, 7, 0 (C5G7), 22 (Kang) : ";
-//    cin >> groupinput;
-//    if (groupinput == 1)
-//        fileinput.open("2D1G input.txt");
-//    else if (groupinput == 2)
-//        fileinput.open("2D2G input.txt");
-//    else if (groupinput == 7)
-//        fileinput.open("2D7G input.txt");
-//    else if (groupinput == 0)
-//        fileinput.open("C5G7 input.txt");
-//    else if (groupinput == 22)
-//        fileinput.open("Kang input.txt");
-//    else {
-//        cout << "Please select group between 1, 2, 7";
-//        return 0;
-//    }
-//
+//    fileinput.open("Assembly test input.txt");
 //    string line; // define line as string character for getline
 //
 //    // Read CARD1 (# of Region, # of Energy group)
 //    cout << "\n[CARD1]\n";
 //    getline(fileinput, line);
-//    int region, group; // # of Region, # of Energy group
-//    fileinput >> region >> group;
+//    int region, group, category; // # of Region, # of Energy group, # of Assembly category
+//    fileinput >> region >> group >> category;
 //    cout << "# of Region : " << region << "\n" << "# of group : " << group << "\n\n"; // output for checking CARD1
 //
-//    // Read CARD2 (Grid size [row column], Geometry size [row column], Geometry)
+//    // Read CARD2 (Grid size [row column], Geometry size [row column], Assembly placement)
 //    cout << "[CARD2]\n";
 //    getline(fileinput, line);
 //    getline(fileinput, line);
 //    double gridsizei, gridsizej;
 //    fileinput >> gridsizei >> gridsizej; // Grid size [cm]
-//    int rowsize, columnsize;
-//    fileinput >> rowsize >> columnsize;
-//    vector<vector<int>> grid(rowsize, vector<int>(columnsize, 0));
-//    for (int row = 0; row < rowsize; ++row) {
+//    int georowsize, geocolumnsize;
+//    fileinput >> georowsize >> geocolumnsize;
+//    vector<vector<int>> Geometry(georowsize, vector<int>(geocolumnsize, 0));
+//    for (int row = 0; row < georowsize; ++row) {
 //        getline(fileinput, line);
-//        for (int column = 0; column < columnsize; ++column) {
-//            fileinput >> grid[row][column];
-//            cout << grid[row][column] << " ";
+//        for (int column = 0; column < geocolumnsize; ++column) {
+//            fileinput >> Geometry[row][column];
+//            cout << Geometry[row][column] << " ";
 //        }
 //        cout << "\n";
 //    }
 //
-//    // Read CARD3 (# of fine meshes for each grid [horizontal vertical])
+//    // Read CARD3
 //    cout << "\n[CARD3]\n";
 //    getline(fileinput, line);
 //    getline(fileinput, line);
+//    int assemrowsize, assemcolumnsize;
+//    fileinput >> assemrowsize >> assemcolumnsize;
+//    vector<vector<vector<int>>> Assembly(category, vector<vector<int>>(assemrowsize, vector<int>(assemcolumnsize, 0)));
+//    getline(fileinput, line);
+//    getline(fileinput, line);
+//    for (int c = 0; c < category; ++c) {
+//        for (int row = 0; row < assemrowsize; ++row) {
+//            for (int column = 0; column < assemcolumnsize; ++column) {
+//                fileinput >> Assembly[c][row][column];
+//                cout << Assembly[c][row][column] << " ";
+//            }
+//            cout << "\n";
+//            getline(fileinput, line);
+//        }
+//        cout << "\n";
+//        getline(fileinput, line);
+//    }
+//
+//    int columnsize = assemcolumnsize * geocolumnsize;
+//    int rowsize = assemrowsize * georowsize;
+//    vector<vector<int>> grid(rowsize, vector<int>(columnsize, 0));
+//    for (int geocolumn = 0; geocolumn < geocolumnsize; ++geocolumn) {
+//        for (int column = geocolumn * assemcolumnsize, assemcolumn = 0; column < (geocolumn + 1) * assemcolumnsize, assemcolumn < assemcolumnsize; ++column, ++assemcolumn) {
+//            for (int georow = 0; georow < georowsize; ++georow) {
+//                for (int row = georow * assemrowsize, assemrow = 0; row < (georow + 1) * assemrowsize, assemrow < assemrowsize; ++row, ++assemrow) {
+//                    grid[row][column] = Assembly[Geometry[georow][geocolumn]][assemrow][assemcolumn];
+//                    cout << grid[row][column] << " ";
+//                }
+//            }
+//            cout << "\n";
+//        }
+//    }
+//
+//    // Read CARD4 (# of fine meshes for each grid [horizontal vertical])
+//    cout << "\n[CARD4]\n";
 //    vector<int> horizontal(columnsize, 0);
 //    vector<int> vertical(rowsize, 0);
 //    int Ni = 0;
@@ -92,10 +108,13 @@
 //                    hi[i] = gridsizei / horizontal[column];
 //                    hj[j] = gridsizej / vertical[row];
 //                }
+//
+//    for (int i = 0; i <= 51; ++i)
+//        cout << hi[i] << " " << hj[i] << "\n";
 //    cout << "Mesh zone type [row X column] : " << Nj << " X " << Ni << "\n";
 //
-//    // Read CARD4 (Boundary Condition[Left Right] : 10 = reflective, 11 = flux zero, 12 = vacuum)
-//    cout << "\n[CARD4]\n";
+//    // Read CARD5 (Boundary Condition[Left Right] : 0 = reflective, 1 = flux zero, 2 = vacuum)
+//    cout << "\n[CARD5]\n";
 //    getline(fileinput, line);
 //    getline(fileinput, line);
 //    vector<int> BC(4, 0);
@@ -103,60 +122,42 @@
 //        fileinput >> BC[i];
 //    vector<double> b(4, 0.0f);
 //    for (int i = 0; i < 4; ++i) {
-//        if (BC[i] == 10)
+//        if (BC[i] == 0)
 //            b[i] = 10E-10f; // reflective
-//        else if (BC[i] == 11)
+//        else if (BC[i] == 1)
 //            b[i] = 10E+10f; // flux zero
-//        else if (BC[i] == 12)
+//        else if (BC[i] == 2)
 //            b[i] = 0.5; // vacuum
 //        else
 //            return 0;
 //    }
 //    vector<string> cardinal{ "North", "South", "West", "East" };
-//    // output for checking CARD2
+//    // output for checking CARD5
 //    for (int i = 0; i < 4; ++i)
 //        cout << cardinal[i] << " Boundary Condition : " << BC[i] << " (" << b[i] << ")\n\n";
 //
-//    // Read CARD5 (Convergence criteria : # of inner iterations, relative error of keff, max relative error of flux)
-//    cout << "[CARD5]\n";
+//    // Read CARD6 (Convergence criteria : # of inner iterations, relative error of keff, max relative error of flux)
+//    cout << "[CARD6]\n";
 //    getline(fileinput, line);
 //    getline(fileinput, line);
 //    int inneriter;
 //    double crik, crip;
 //    fileinput >> inneriter >> crik >> crip;
-//    // output for checking CARD3
+//    // output for checking CARD6
 //    cout << "# of inner iterations : " << inneriter << "\nkeff error : " << crik << "\nsource group error : " << crip << "\n\n";
 //
-//    // Read CARD6 (D, Xs(Fission), Xs(Absorption)) [region][group][data type]
-//    cout << "[CARD6]\n";
-//    int data = 3; // # of types of CARD6
-//    vector<vector<vector<double>>> CARD6(region, vector<vector<double>>(group, vector<double>(data, 0.0f)));
+//    // Read CARD7 (D, Xs(Fission), Xs(Absorption)) [region][group][data type]
+//    cout << "[CARD7]\n";
+//    int data = 3; // # of types of CARD7
+//    vector<vector<vector<double>>> CARD7(region, vector<vector<double>>(group, vector<double>(data, 0.0f)));
 //    getline(fileinput, line);
 //    getline(fileinput, line);
 //    for (int r = 0; r < region; ++r) {
 //        for (int g = 0; g < group; ++g) {
 //            getline(fileinput, line);
 //            for (int i = 0; i < data; ++i) {
-//                fileinput >> CARD6[r][g][i];
-//                cout << CARD6[r][g][i] << " "; // output for checking CARD6
-//            }
-//            cout << "\n"; // output for checking CARD6
-//        }
-//        getline(fileinput, line);
-//        cout << "\n"; // output for checking CARD6
-//    }
-//
-//
-//    // Read CARD7 (Xs(Only Down Scattering)) [region][High E group][Low E group]
-//    cout << "[CARD7]\n";
-//    vector<vector<vector<double>>> CARD7(region, vector<vector<double>>(group, vector<double>(group, 0.0f)));
-//    getline(fileinput, line);
-//    for (int r = 0; r < region; ++r) {
-//        for (int lg = 0; lg < group; ++lg) {
-//            getline(fileinput, line);
-//            for (int hg = 0; hg < group; ++hg) {
-//                fileinput >> CARD7[r][hg][lg];
-//                cout << CARD7[r][lg][hg] << " "; // output for checking CARD7
+//                fileinput >> CARD7[r][g][i];
+//                cout << CARD7[r][g][i] << " "; // output for checking CARD7
 //            }
 //            cout << "\n"; // output for checking CARD7
 //        }
@@ -164,16 +165,34 @@
 //        cout << "\n"; // output for checking CARD7
 //    }
 //
-//    // Read CARD8 (xg : fraction of fission neutrons)
+//
+//    // Read CARD8 (Xs(Only Down Scattering)) [region][High E group][Low E group]
 //    cout << "[CARD8]\n";
+//    vector<vector<vector<double>>> CARD8(region, vector<vector<double>>(group, vector<double>(group, 0.0f)));
+//    getline(fileinput, line);
+//    for (int r = 0; r < region; ++r) {
+//        for (int lg = 0; lg < group; ++lg) {
+//            getline(fileinput, line);
+//            for (int hg = 0; hg < group; ++hg) {
+//                fileinput >> CARD8[r][hg][lg];
+//                cout << CARD8[r][lg][hg] << " "; // output for checking CARD8
+//            }
+//            cout << "\n"; // output for checking CARD8
+//        }
+//        getline(fileinput, line);
+//        cout << "\n"; // output for checking CARD8
+//    }
+//
+//    // Read CARD9 (xg : fraction of fission neutrons)
+//    cout << "[CARD9]\n";
 //    // xg [group]
 //    vector<double> xg(group, 0.0f);
 //    getline(fileinput, line);
 //    for (int g = 0; g < group; ++g) {
 //        fileinput >> xg[g];
-//        cout << "group " << g + 1 << " ÀÇ fission neutron fraction : " << xg[g] << "\n"; // output for checking CARD8
+//        cout << "group " << g + 1 << " ÀÇ fission neutron fraction : " << xg[g] << "\n"; // output for checking CARD9
 //    }
-//    cout << "\n\n"; // output for checking CARD8
+//    cout << "\n\n"; // output for checking CARD9
 //
 //    // Diffusion coefficient [cm] [group][i mesh][j mesh]
 //    vector<vector<vector<double>>> D(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
@@ -186,9 +205,9 @@
 //            for (int i = horizontalsum[column] + 1; i <= horizontalsum[column + 1]; ++i)
 //                for (int row = 0; row < rowsize; ++row)
 //                    for (int j = verticalsum[row] + 1; j <= verticalsum[row + 1]; ++j) {
-//                        D[g][i][j] = CARD6[grid[row][column]][g][0];
-//                        Xf[g][i][j] = CARD6[grid[row][column]][g][1];
-//                        Xa[g][i][j] = CARD6[grid[row][column]][g][2];
+//                        D[g][i][j] = CARD7[grid[row][column]][g][0];
+//                        Xf[g][i][j] = CARD7[grid[row][column]][g][1];
+//                        Xa[g][i][j] = CARD7[grid[row][column]][g][2];
 //                    }
 //
 //    // scattering X section [cm-1] [high E group][low E group][i mesh][j mesh]
@@ -199,7 +218,7 @@
 //                for (int i = horizontalsum[column] + 1; i <= horizontalsum[column + 1]; ++i)
 //                    for (int row = 0; row < rowsize; ++row)
 //                        for (int j = verticalsum[row] + 1; j <= verticalsum[row + 1]; ++j)
-//                            Xs[hg][lg][i][j] = CARD7[grid[row][column]][hg][lg];
+//                            Xs[hg][lg][i][j] = CARD8[grid[row][column]][hg][lg];
 //
 //    // removal X section [cm-1] [group][i mesh][j mesh]
 //    vector<vector<vector<double>>> Xr(group, vector<vector<double>>(Ni + 1, vector<double>(Nj + 1, 0.0f)));
@@ -210,7 +229,7 @@
 //                    if (g1 == g2)
 //                        continue;
 //                    Xr[g1][i][j] += Xs[g2][g1][i][j];
-//                }   
+//                }
 //                Xr[g1][i][j] += Xa[g1][i][j];
 //            }
 //

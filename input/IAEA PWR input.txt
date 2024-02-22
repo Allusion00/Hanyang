@@ -1,0 +1,57 @@
+#CARD1 (# of Region, # of Energy group)
+4 2
+#CARD2 (Grid size[cm][row column], Geometry size[row column], Geometry)
+10 10
+17 17
+2 1 1 1 1 1 1 2 2 1 1 1 1 0 0 3 3
+1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 3 3
+1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 3 3
+1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 3 3
+1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 3 3
+1 1 1 1 1 1 1 1 1 1 1 0 0 3 3 3 3
+1 1 1 1 1 1 1 1 1 1 1 0 0 3 3 3 3
+2 1 1 1 1 1 1 2 2 0 0 0 0 3 3 v v
+2 1 1 1 1 1 1 2 2 0 0 0 0 3 3 v v
+1 1 1 1 1 1 1 0 0 0 0 3 3 3 3 v v
+1 1 1 1 1 1 1 0 0 0 0 3 3 3 3 v v
+1 1 1 0 0 0 0 0 0 3 3 3 3 v v v v
+1 1 1 0 0 0 0 0 0 3 3 3 3 v v v v
+0 0 0 0 0 3 3 3 3 3 3 v v v v v v
+0 0 0 0 0 3 3 3 3 3 3 v v v v v v
+3 3 3 3 3 3 3 v v v v v v v v v v
+3 3 3 3 3 3 3 v v v v v v v v v v
+#CARD3 (# of fine meshes for each grid[horizontal vertical])
+6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6
+6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6 6
+#CARD4 (Boundary Condition [North / South / West / East] : 0 = reflective, 1 = flux zero, 2 = vacuum)
+10 12 10 12
+#CARD5 (Convergence criteria : # of inner iterations, relative error of keff, max relative error of flux)
+4 1.0E-10 1.0E-07
+#CARD6 (D, Xs(Fission), Xs(Absorption))
+@Region(0)
+1.500	0.000	0.010
+0.400	0.135	0.080
+@Region(1)
+1.500	0.000	0.010
+0.400	0.135	0.085
+@Region(2) : Control Rod
+1.500	0.000	0.010
+0.400	0.135	0.130
+@Region(3) : Water
+2.000	0.000	0.000
+0.300	0.000	0.010
+#CARD7 (Xs(Scattering))
+@Region(0)
+0.0 0.020
+0.0 0.0
+@Region(1)
+0.0 0.020
+0.0 0.0
+@Region(2) : Control Rod
+0.0 0.020
+0.0 0.0
+@Region(3) : Water
+0.0 0.040
+0.0 0.0
+#CARD8 (xg : fraction of fission neutrons for each group)
+1.0 0.0

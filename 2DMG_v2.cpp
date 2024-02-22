@@ -94,7 +94,7 @@
 //				}
 //	cout << "Mesh zone type [row X column] : " << Nj << " X " << Ni << "\n";
 //
-//	// Read CARD4 (Boundary Condition[Left Right] : 0 = reflective, 1 = flux zero, 2 = vacuum)
+//	// Read CARD4 (Boundary Condition[Left Right] : 10 = reflective, 11 = flux zero, 12 = vacuum)
 //	cout << "\n[CARD4]\n";
 //	getline(fileinput, line);
 //	getline(fileinput, line);
@@ -103,9 +103,9 @@
 //		fileinput >> BC[i];
 //	vector<double> r(4, 0.0f);
 //	for (int i = 0; i < 4; ++i) {
-//		if (BC[i] == 0)
+//		if (BC[i] == 10)
 //			r[i] = 10E-10f; // reflective
-//		else if (BC[i] == 1)
+//		else if (BC[i] == 11)
 //			r[i] = 10E+10f; // flux zero
 //		else
 //			r[i] = 0.5; // vacuum
